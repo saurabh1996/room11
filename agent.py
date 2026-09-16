@@ -68,13 +68,14 @@ def run_agent(pnr: str, last_name: str, message: str) -> str:            # ✏�
     answer = ""
     turns = 1
     while response.stop_reason == "tool_use" and turns < MAX_TOOL_CALLS:
-        messages.append({"role": "assistant", "content": text_of(response)})
+        messages.append({"role": "assistant", "content": response.content})
         messages.append({"role": "user", "content": tool_results(response)})
-        answer = text_of(response)
+       
         response = client.messages.create(
             model=MODEL, max_tokens=4096, system=runtime_preamble() + SYSTEM_PROMPT + TONE_ADDENDUM,
             thinking={"type": "adaptive"}, tools=tools, messages=messages,
         )
+        answer = text_of(response)
         turns += 1
 
     return answer
@@ -119,14 +120,15 @@ def build_tools() -> List[Dict[str, Any]]:                 # ✏️ Build 1, ste
                 "type": "object",
                 "properties": {
                     "flight_no": {"type": "string"},
-                    "date": {"type": "string", "description": "MM/DD/YYYY"},
+                    "date": {"type": "string", "description": "YYYY-MM-DD"},
                 },
                 "required": ["flight_no", "date"],
             },
         },
         {
             "name": "search_alternatives",
-            "description": "search",
+            "description": "search alternatives for a given PNR after check_policy confirms customer elgibility"
+            ". Returns a list of options, each with a unique option_id. Pass option_id to hold_seat or confirm_rebooking to act on it.",
             "input_schema": {
                 "type": "object",
                 "properties": {"pnr": {"type": "string"}},
@@ -159,7 +161,7 @@ def build_tools() -> List[Dict[str, Any]]:                 # ✏️ Build 1, ste
         },
         {
             "name": "hold_seat",
-            "description": "Place a 15-minute hold on one alternative. Reversible. It simply expires.",
+            "description": "Obtain output from search_alternatives and place a 15-minute hold on one alternative. Reversible. It simply expires.",
             "input_schema": {
                 "type": "object",
                 "properties": {"option_id": {"type": "string"}, "pnr": {"type": "string"}},
@@ -175,8 +177,8 @@ def build_tools() -> List[Dict[str, Any]]:                 # ✏️ Build 1, ste
             ),
             "input_schema": {
                 "type": "object",
-                "properties": {"hold_id": {"type": "string"}, "confirmation_token": {"type": "string"}},
-                "required": ["hold_id", "confirmation_token"],
+                "properties": {"option_id": {"type": "string"}, "confirmation_token": {"type": "string"}},
+                "required": ["option_id", "confirmation_token"],
             },
         },
         {
