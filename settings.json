@@ -1,8 +1,1 @@
-{
-  "env": {
-    "ANTHROPIC_BASE_URL": "https://one-day.ai.ailabforge.com",
-    "ANTHROPIC_AUTH_TOKEN": "sk-xDqhON-9qHFO1DMgZSjXeA"
-  },
-  "model": "sonnet",
-  "effortLevel": "medium"
-}
+
